@@ -1,5 +1,7 @@
+from ast import Dict
 import asyncio
 import logging 
+import json
 import os 
 from pathlib import Path
 import mcp.types as types
@@ -7,6 +9,9 @@ from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from enum import Enum
 from pydantic import BaseModel
+import chardet
+
+ged_level_1_tags = ['BIRT', 'DEAT', 'MARR', 'BURI', 'DIV', 'OCCU', 'RESI', 'CHR']
 
 # Tools schemas 
 class ListFiles(BaseModel):
@@ -15,18 +20,22 @@ class ListFiles(BaseModel):
 class RenameFiles(BaseModel):
     file_name: str
     new_name: str
+    
+class ViewFiles(BaseModel):
+    name: str
 
 # Tool names
 class AncestryTools(str, Enum):
     LIST_FILES = "list_files"
     RENAME_FILE = "rename_file"
+    VIEW_FILES = "view_file"
 
 # Tool helper functions
 def find_files_with_name(name: str | None = None, path: Path | None = None) -> list[Path]:
     pattern = f"{name}.ged" if name is not None else "*.ged"
     return list(path.glob(pattern))
 
-def rename_files(new_name: str | None = None, files: list[Path] | None = None) -> tuple[list[Path], str]:
+def rename_files(new_name: str | None = None, files: list[Path] | None = None) -> tuple[str, list[Dict], str]:
     try:
         renamed_files = []
         for file in files:
@@ -41,9 +50,74 @@ def rename_files(new_name: str | None = None, files: list[Path] | None = None) -
             except OSError as e:
                 return [], f'Error renaming {file.name}: {str(e)}'
     except Exception as e:
-        return [], f'An unexpected error ocurred: {str(e)}, Please try again later or contact support.'
+        return [], f'An unexpected error ocurred: {str(e)}. Please try again later or contact support.'
     
     return renamed_files, ""
+
+def parse_ged_file(files: list[Path] | None = None) -> tuple[list[Dict], str]:
+    try:
+        parsed_geds = {}
+        for file in files:
+            if not file.exists() or file.suffix.lower() != '.ged':
+                continue
+            
+            parsed_geds[file.name] = []
+            
+            # determine encoding 
+            raw_bytes = file.read_bytes()
+            result = chardet.detect(raw_bytes)
+            # open file, and parse ged data
+            try:
+                with file.open(encoding=result['encoding']) as ged:
+                    ged_obj = {}
+                    cur_lvl1_tag = None
+                    
+                    for line in ged:
+                        '''
+                        Level 0: root records
+                        Level 1: main info about records
+                        Level 2: details about level 1 info
+                        '''
+                        parts = line.strip().split(' ', 2)
+                        if not parts: 
+                            continue
+                        level = int(parts[0])
+                        tag = parts[1]
+                        value = parts[2] if len(parts) > 2 else ''
+
+                        if level == 0: 
+                            # save prev obj if exists
+                            if ged_obj and 'type' in ged_obj:
+                                parsed_geds[file.name].append(ged_obj)
+                                
+                            ged_obj = {}
+                            if '@' in tag: # ID
+                                ged_obj['id'] = tag
+                                ged_obj['type'] = value
+                        elif level == 1:
+                            cur_lvl1_tag = tag
+                            if tag in ged_level_1_tags:
+                                ged_obj[tag] = {}
+                            else:
+                                ged_obj[tag] = value
+                        elif level == 2 and cur_lvl1_tag:
+                            # If parent is an event
+                            if cur_lvl1_tag in ged_level_1_tags:
+                                if cur_lvl1_tag not in ged_obj:
+                                    ged_obj[cur_lvl1_tag] = {}
+                                ged_obj[cur_lvl1_tag][tag] = value
+                            elif cur_lvl1_tag == 'NAME':
+                                ged_obj[f'NAME_{tag}'] = value
+                            else:
+                                ged_obj[tag] = value
+                                
+                    if ged_obj and 'type' in ged_obj:
+                        parsed_geds[file.name].append(ged_obj)
+            except UnicodeDecodeError:
+                return [], f'File could not be decoded, please check encoding on the .ged'
+    except Exception as e:
+        return [], f'An unexpected error occured: {str(e)}. Please try again later or contact support.'
+    return parsed_geds, ""
 
 # logging config
 logging.basicConfig(
@@ -98,6 +172,11 @@ async def serve(gedcom_path: str | None = None) -> None:
                 name=AncestryTools.RENAME_FILE,
                 description="Rename a GEDCOM file",
                 inputSchema=RenameFiles.model_json_schema()
+            ),
+            types.Tool(
+                name=AncestryTools.VIEW_FILES,
+                description="View a GEDCOM file in plaintext format",
+                inputSchema=ViewFiles.model_json_schema()
             )
         ]
     
@@ -140,6 +219,35 @@ async def serve(gedcom_path: str | None = None) -> None:
                         text=f"{file.name}\nURI:gedcom://{file.name}"
                     )
                     for file in renamed_files
+                ]
+            case AncestryTools.VIEW_FILES:
+                # get files, if none found tell serve rthat
+                gedcom_files = find_files_with_name(arguments["name"].removesuffix('.ged'), path)
+                if not gedcom_files:
+                    return [
+                        types.TextContent(
+                            type="text",
+                            text=f'No files found matching {arguments["name"]}'
+                        )    
+                    ]
+                
+                # show file, if error message tell server
+                parsed_geds, message = parse_ged_file(gedcom_files)
+                
+                if message:
+                    return [
+                        types.TextContent(
+                            type="text",
+                            text=message
+                        )
+                    ]
+                
+                return [
+                    types.TextContent(
+                        type="text",
+                        text=json.dumps({filename: data}, indent=2)
+                    )
+                    for filename, data in parsed_geds.items()
                 ]
             case _:
                 raise ValueError(f"Unknown Tool: {name}")
