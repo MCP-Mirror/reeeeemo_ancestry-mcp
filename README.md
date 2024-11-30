@@ -14,7 +14,7 @@ Built on top of the [Model Context Protocol Python SDK](https://modelcontextprot
 
 ## Overview
 
-Python server implementing Model Context Protocol (MCP) for interactibility with `.ged` files *(Ancestry files)*
+Python server implementing Model Context Protocol (MCP) for interactibility with `.ged` files *(GEDCOM files, commonly seen on Ancestry.com)*
 
 ## Features
     
