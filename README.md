@@ -11,12 +11,12 @@ Built on top of the [Model Context Protocol Python SDK](https://modelcontextprot
 
 ## Overview
 
-Python server implementing Model Context Protocol (MCP) for interactibility with .ged files (Ancestry files)
+Python server implementing Model Context Protocol (MCP) for interactibility with `.ged` files *(Ancestry files)*
 
 ## Features
     
 - Read and parse .ged files
-- Rename .ged files
+- Rename `.ged` files
 - Search within .ged files for certain individuals, family, etc
 
 **Note:** The server will only allow operations within the directory specified via `args`
@@ -53,7 +53,7 @@ Add this to your `claude_desktop_config.json` (will be updated to pypi soon):
      "ancestry": {
        "command": "mcp-server-ancestry",
        "args": ["--gedcom-path", "path/to/your/gedcom/files"],
-       "cwd": "path/to/your/repo"
+       "cwd": "path/to/work/directory"
      }
   }
 }
