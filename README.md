@@ -45,15 +45,19 @@ Python server implementing Model Context Protocol (MCP) for interactibility with
 
 
 ## Usage with Claude Desktop
-Add this to your `claude_desktop_config.json` (will be updated to pypi soon):
+
+1. First, install the package:
+```pip install mcp-server-ancestry```
+
+
+Add this to your `claude_desktop_config.json` 
 
 ```json
 {
   "mcpServers": {
      "ancestry": {
        "command": "mcp-server-ancestry",
-       "args": ["--gedcom-path", "path/to/your/gedcom/files"],
-       "cwd": "path/to/work/directory"
+       "args": ["--gedcom-path", "path/to/your/gedcom/files"]
      }
   }
 }

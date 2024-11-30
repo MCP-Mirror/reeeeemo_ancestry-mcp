@@ -1,9 +1,4 @@
 from .server import serve
-"""
-    Develop cmds for local run (Windows)
-    pip uninstall mcp-server-ancestry
-    pip install -e .
-"""
 
 
 def main():
