@@ -1,11 +1,14 @@
 # Ancestry MCP Server
 [![MIT licensed][mit-badge]][mit-url]
 [![Python Version][python-badge]][python-url]
+[![PyPI version][pypi-badge]][pypi-url]
 
 [mit-badge]: https://img.shields.io/pypi/l/mcp.svg
 [mit-url]: https://github.com/reeeeemo/ancestry-mcp/blob/main/LICENSE
 [python-badge]: https://img.shields.io/pypi/pyversions/mcp.svg
 [python-url]: https://www.python.org/downloads/
+[pypi-badge]: https://badge.fury.io/py/mcp-server-ancestry.svg
+[pypi-url]: https://pypi.org/project/mcp-server-ancestry
 
 Built on top of the [Model Context Protocol Python SDK](https://modelcontextprotocol.io)
 
@@ -50,7 +53,7 @@ Python server implementing Model Context Protocol (MCP) for interactibility with
 ```pip install mcp-server-ancestry```
 
 
-Add this to your `claude_desktop_config.json` 
+2. Add this to your `claude_desktop_config.json` 
 
 ```json
 {
