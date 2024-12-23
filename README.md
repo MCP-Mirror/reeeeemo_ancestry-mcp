@@ -1,4 +1,5 @@
 # Ancestry MCP Server
+[![smithery badge](https://smithery.ai/badge/mcp-server-ancestry)](https://smithery.ai/server/mcp-server-ancestry)
 [![MIT licensed][mit-badge]][mit-url]
 [![Python Version][python-badge]][python-url]
 [![PyPI version][pypi-badge]][pypi-url]
@@ -49,6 +50,15 @@ Python server implementing Model Context Protocol (MCP) for interactibility with
 
 ## Usage with Claude Desktop
 
+### Installing via Smithery
+
+To install Ancestry GEDCOM Server for Claude Desktop automatically via [Smithery](https://smithery.ai/server/mcp-server-ancestry):
+
+```bash
+npx -y @smithery/cli install mcp-server-ancestry --client claude
+```
+
+### Installing Manually
 1. First, install the package:
 ```pip install mcp-server-ancestry```
 
